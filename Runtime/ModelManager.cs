@@ -35,6 +35,7 @@ namespace Mig.Model
                 if (currentGameObjectRoot == null)
                 {
                     currentGameObjectRoot = new GameObject("root");
+                    MigElementWrapper.WrapperRoot = currentGameObjectRoot;
                 }
                 return currentGameObjectRoot;
             }

@@ -11,7 +11,6 @@ namespace Mig.Model.ModelLoader
 
             foreach (var component in allComponents)
             {
-                Debug.Log($"[Mig] ProcessModel add mesh collider at {component.gameObject.name}");
 
                 if (component is SkinnedMeshRenderer smr)
                 {
@@ -30,20 +29,29 @@ namespace Mig.Model.ModelLoader
 
                     if (mesh.sharedMesh.subMeshCount > 1)
                     {
-                        var childMeshes = ExtractSubmeshes.Extract(mesh);
+                        Debug.Log($"[Mig] ProcessModel split mesh at {component.gameObject.name}");
 
-                        if (childMeshes.Count > 0)
+                        try
                         {
-                            //mesh.GetComponent<MeshRenderer>().enabled = false;
-                            Object.DestroyImmediate(mesh.GetComponent<MeshRenderer>());
-                            Object.DestroyImmediate(mesh);
+                            var childMeshes = ExtractSubmeshes.Extract(mesh);
+
+                            if (childMeshes.Count > 0)
+                            {
+                                //mesh.GetComponent<MeshRenderer>().enabled = false;
+                                GameObject.DestroyImmediate(mesh.GetComponent<MeshRenderer>());
+                                GameObject.DestroyImmediate(mesh);
+                            }
+
+                            foreach (MeshFilter child in childMeshes)
+                            {
+                                var mc = child.gameObject.GetOrAddComponent<MeshCollider>();
+
+                                mc.sharedMesh = child.sharedMesh;
+                            }
                         }
-
-                        foreach (MeshFilter child in childMeshes)
+                        catch (System.Exception e)
                         {
-                            var mc = child.gameObject.GetOrAddComponent<MeshCollider>();
-
-                            mc.sharedMesh = child.sharedMesh;
+                            Debug.LogError(e);
                         }
                     }
                     else
