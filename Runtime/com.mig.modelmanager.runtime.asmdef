@@ -2,13 +2,12 @@
     "name": "Mig.Model",
     "rootNamespace": "",
     "references": [
-        "GUID:a42927d1d4a3b4cda9b076a7adecb9cc",
-        "GUID:5e7ba8d6d26c84943b64dd07bd1c9510",
         "GUID:bf3897a882e91f34b9bf1d14e8caa07d",
         "GUID:383d0723302019e4bb57d134a5aa19b5",
         "GUID:7c0ea847e440c6b44996dff489b4ca52",
         "GUID:25ace1f7ded6f48c0a8abf5ef590456e",
-        "GUID:43621a2332431e041bf3c50f72ba5a66"
+        "GUID:43621a2332431e041bf3c50f72ba5a66",
+        "GUID:18d18f811ba286c49814567a3cfba688"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

@@ -1,7 +1,8 @@
-using GLTFast;
 using System;
 using System.IO;
+using System.Runtime.ExceptionServices;
 using UnityEngine;
+using UnityGLTF;
 
 namespace Mig.Model.ModelLoader
 {
@@ -10,7 +11,6 @@ namespace Mig.Model.ModelLoader
         private ModelOperateState operateState = ModelOperateState.LOADING;
 
         private Transform parent;
-
         public void SetParent(Transform root)
         {
             parent = root;
@@ -39,29 +39,29 @@ namespace Mig.Model.ModelLoader
         {
             operateState = ModelOperateState.LOADING;
 
+            ImportOptions glftLoaderOptions = new ImportOptions();
+
 
             byte[] data = File.ReadAllBytes(path);
-            var gltf = new GltfImport();
-            bool success = await gltf.LoadGltfBinary(
-                data,
-                // The URI of the original data is important for resolving relative URIs within the glTF
-                new Uri(path)
-                );
-            if (success)
-            {
-                success = await gltf.InstantiateMainSceneAsync(parent);
+            var gltfImporter = new GLTFSceneImporter(path, glftLoaderOptions);
 
-                // TODO
-                if (success)
+            await gltfImporter.LoadSceneAsync(onLoadComplete: (result, info) =>
+            {
+                if (info == null)
                 {
+                    foreach (Transform child in result.transform)
+                    {
+                        child.SetParent(parent);
+                    }
                     _callback?.Invoke(parent.gameObject);
                 }
                 else
                 {
                     _callback.Invoke(null);
                 }
-            }
-            operateState = ModelOperateState.LOAD_COMPLETE;
+                operateState = ModelOperateState.LOAD_COMPLETE;
+
+            });
         }
 
         public void OnDispose()

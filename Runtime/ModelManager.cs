@@ -192,9 +192,6 @@ namespace Mig.Model
             ModelPostProcess.ProcessModel(loadedModelRoot);
 
             OnModelLoadCompleteEvent?.Invoke();
-
-            EventManager.TriggerEvent(Events.OnModelRefresh, loadedModelRoot);
-
         }
     }
 
