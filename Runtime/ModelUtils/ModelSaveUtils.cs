@@ -1,7 +1,6 @@
 using UnityEngine;
 using System.Threading.Tasks;
 using UnityGLTF;
-using UnityEditor.Animations;
 using System.Collections.Generic;
 
 namespace Mig.Model.Utils
@@ -25,7 +24,7 @@ namespace Mig.Model.Utils
             var exportOptions = new ExportContext(settings);
             var exporter = new GLTFSceneExporter(children.ToArray(), exportOptions);
 
-            settings.SaveFolderPath = saveDir;
+            //settings.SaveFolderPath = saveDir;
             exporter.SaveGLB(saveDir, sceneName);
 
             return true;
