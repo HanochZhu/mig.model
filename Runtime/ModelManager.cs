@@ -17,7 +17,7 @@ namespace Mig.Model
 
         // TODO
         [JsonIgnore]
-        public Material CurrentMaterial { get; set; }
+        public MigMaterial CurrentMaterial { get; set; }
         private List<GameObject> m_loadedModel = new();
 
         private IModelLoader m_currentLoader;
@@ -70,9 +70,14 @@ namespace Mig.Model
             GameObject obj = (GameObject)selected;
             CurrentSelectGameObject = obj;
             if (obj.GetComponent<MeshRenderer>() != null)
-                CurrentMaterial = obj.GetComponent<MeshRenderer>()?.materials[0];
+            {
+                CurrentMaterial = new MigMaterial(obj.GetComponent<MeshRenderer>()?.material);
+            }
             else
+            {
                 CurrentMaterial = null;
+                Debug.LogError($"Fail to get render at {obj.name}");
+            }
         }
 
         public void LoadFormFilePickerAsync(IModelLoader ModelFilePickAndLoader)
