@@ -11,7 +11,7 @@ namespace Mig.Model.ModelLoader
 
             foreach (var component in allComponents)
             {
-
+                component.gameObject.layer = MigLayerManager.interactable;
                 if (component is SkinnedMeshRenderer smr)
                 {
                     if (smr.sharedMesh.subMeshCount != 1)

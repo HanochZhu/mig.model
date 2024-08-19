@@ -3,6 +3,7 @@ using Mig.Model.ModelLoader;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Tracing;
 using System.IO;
 using UnityEngine;
 
@@ -17,7 +18,8 @@ namespace Mig.Model
 
         // TODO
         [JsonIgnore]
-        public MigMaterial CurrentMaterial { get; set; }
+        public MigMaterial CurrentMaterial { get; private set; }
+
         private List<GameObject> m_loadedModel = new();
 
         private IModelLoader m_currentLoader;
@@ -45,39 +47,42 @@ namespace Mig.Model
             }
         }
 
-        public Renderer CurrentSelectMeshRender
-        {
-            get
-            {
-                return CurrentSelectGameObject.GetComponent<Renderer>();
-            }
-        }
-
         private void OnEnable()
         {
-            EventManager.StartListening(Events.OnSelectedChanged, OnSelectedChanged);
+            EventManager.StartListening(MigEventCommon.OnClickModel, OnClickModel);
             EventManager.StartListening(Events.OnDeleteModel, OnOnDeleteModel);
         }
 
         private void OnDisable()
         {
-            EventManager.StopListening(Events.OnSelectedChanged, OnSelectedChanged);
+            EventManager.StopListening(MigEventCommon.OnClickModel, OnClickModel);
             EventManager.StopListening(Events.OnDeleteModel, OnOnDeleteModel);
         }
 
-        private void OnSelectedChanged(object selected, object arg1)
+
+        private void OnClickModel(object obj, object arg1)
         {
-            GameObject obj = (GameObject)selected;
-            CurrentSelectGameObject = obj;
-            if (obj.GetComponent<MeshRenderer>() != null)
+            if (obj == null)
             {
-                CurrentMaterial = new MigMaterial(obj.GetComponent<MeshRenderer>()?.material);
+                if (CurrentSelectGameObject != null)
+                {
+                    this.CurrentSelectGameObject = null;
+                    this.CurrentMaterial = null;
+                    EventManager.TriggerEvent(MigEventCommon.OnSelectedChanged, null);
+                }
+                return;
             }
-            else
+
+            GameObject selected = (GameObject)obj;
+
+            if (CurrentSelectGameObject == selected)
             {
-                CurrentMaterial = null;
-                Debug.LogError($"Fail to get render at {obj.name}");
+                return;
             }
+
+            CurrentMaterial = new MigMaterial(selected.GetComponent<MeshRenderer>().material, selected);
+            CurrentSelectGameObject = selected;
+            EventManager.TriggerEvent(MigEventCommon.OnSelectedChanged, CurrentSelectGameObject);
         }
 
         public void LoadFormFilePickerAsync(IModelLoader ModelFilePickAndLoader)
