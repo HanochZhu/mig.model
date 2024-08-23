@@ -51,14 +51,28 @@ namespace Mig.Model
         {
             EventManager.StartListening(MigEventCommon.OnClickModel, OnClickModel);
             EventManager.StartListening(Events.OnDeleteModel, OnOnDeleteModel);
+            EventManager.StartListening(MigEventCommon.OnChangeSelectModelTexture, OnChangeSelectModelTexture);
         }
 
         private void OnDisable()
         {
             EventManager.StopListening(MigEventCommon.OnClickModel, OnClickModel);
             EventManager.StopListening(Events.OnDeleteModel, OnOnDeleteModel);
+            EventManager.StopListening(MigEventCommon.OnChangeSelectModelTexture, OnChangeSelectModelTexture);
+
         }
 
+        private void OnChangeSelectModelTexture(object arg0, object arg1)
+        {
+            var tex = (Texture)arg0;
+
+            if (tex == null || this.CurrentMaterial == null)
+            {
+                return;
+            }
+
+            this.CurrentMaterial.mainTexture = tex;
+        }
 
         private void OnClickModel(object obj, object arg1)
         {
