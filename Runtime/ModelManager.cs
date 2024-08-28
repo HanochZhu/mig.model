@@ -1,3 +1,4 @@
+using JigSpace;
 using Mig.Core;
 using Mig.Model.ModelLoader;
 using Newtonsoft.Json;
@@ -64,10 +65,16 @@ namespace Mig.Model
 
         private void OnChangeSelectModelTexture(object arg0, object arg1)
         {
+            if (this.CurrentMaterial == null)
+            {
+                return;
+            }
+
             var tex = (Texture)arg0;
 
-            if (tex == null || this.CurrentMaterial == null)
+            if (tex == null)
             {
+                this.CurrentMaterial = null;
                 return;
             }
 
@@ -109,7 +116,7 @@ namespace Mig.Model
 
             m_currentLoader = ModelFilePickAndLoader;
 
-            m_currentLoader.SetParent(CurrentGameObjectRoot.transform);
+            m_currentLoader.SetParent(new GameObject("LoadingGameObject").transform);
 
             m_currentLoader.LoadAsync("", OnLoadComplete);
         }
@@ -206,7 +213,22 @@ namespace Mig.Model
             }
             if (loadedModelRoot != CurrentGameObjectRoot)
             {
-                loadedModelRoot.transform.SetParent(CurrentGameObjectRoot.transform);
+
+                var bound = GameObjectExtensions.GetTotalBounds(loadedModelRoot);
+                var shouldCenterPos = new Vector3(0, (bound.max.y - bound.min.y) / 2f, 0);
+
+                if (bound.center != shouldCenterPos)
+                {
+                    var offset = shouldCenterPos - bound.center;
+                    loadedModelRoot.transform.position += offset;
+                }
+
+                foreach(Transform trans in loadedModelRoot.transform)
+                {
+                    trans.SetParent(CurrentGameObjectRoot.transform, true);
+                }
+                GameObject.Destroy(loadedModelRoot.gameObject);
+                loadedModelRoot = CurrentGameObjectRoot;
             }
             CurrentSelectGameObject = loadedModelRoot;
             m_loadedModel.Add(loadedModelRoot);
