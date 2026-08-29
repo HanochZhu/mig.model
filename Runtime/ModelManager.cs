@@ -152,17 +152,19 @@ namespace Mig.Model
 
             m_currentSaver = server;
 
-            var saveWebDir = Path.Combine(FTPClient.GetCurrentFTPDirRoot(), CurrentProjectName);
-
-            var isSuccess = FTPClient.MakeDir(saveWebDir);
-
-            if (!isSuccess)
+            if (RemoteStorage.BackendName == "ftp")
             {
-                Debug.LogError($"[Mig] Failed to make dir at  {saveWebDir}");
+                var saveWebDir = FTPClient.CombineUrl(FTPClient.GetCurrentFTPDirRoot(), CurrentProjectName);
+                if (!FTPClient.DirectoryIsExist(saveWebDir) && !FTPClient.MakeDir(saveWebDir))
+                {
+                    Debug.LogError($"[Mig] Failed to make dir at  {saveWebDir}");
+                    return;
+                }
+                m_currentSaver.Save(saveWebDir, serializer, OnSaveComplete);
                 return;
             }
 
-            m_currentSaver.Save(saveWebDir, serializer, OnSaveComplete);
+            m_currentSaver.Save(CurrentProjectName, serializer, OnSaveComplete);
         }
 
         public void SaveToWeb(IModelSaver ModelSaveToWebSaver)

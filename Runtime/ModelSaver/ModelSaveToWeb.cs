@@ -20,7 +20,7 @@ namespace Mig.Model.ModelSaver
 
         public float GetPercentage()
         {
-            return FTPClient.GetUpLoadPercentage();
+            return RemoteStorage.Progress;
         }
 
         public ModelOperateState GetState()
@@ -55,12 +55,8 @@ namespace Mig.Model.ModelSaver
             {
                 exporter.SaveGLBToStream(ftpStream, "My new glTF scene");
                 ftpStream.Position = 0;
-
-                var getUploadPath = FTPClient.CombineUrl(
-                    string.IsNullOrEmpty(pathORAddress) ? FTPClient.GetCurrentFTPDirRoot() : pathORAddress,
-                    modelParent.name + ".glb");
-
-                await FTPClient.UploadStream(getUploadPath, ftpStream, OnUploadCallback);
+                var uploaded = await RemoteStorage.UploadPackageAsync(modelParent.name, ftpStream);
+                OnUploadCallback(uploaded);
             }
         }
 
@@ -75,7 +71,7 @@ namespace Mig.Model.ModelSaver
             m_SaveState = result ? ModelOperateState.LOAD_COMPLETE : ModelOperateState.ERROR;
             if (!result)
             {
-                lastError = "FTP upload failed";
+                lastError = "Remote upload failed";
             }
             Debug.Log(result ? "[Mig] Model uploaded" : "[Mig] Model upload failed");
             onSaveCompleteCallback?.Invoke(result);
