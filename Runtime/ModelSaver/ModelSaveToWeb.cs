@@ -10,9 +10,12 @@ namespace Mig.Model.ModelSaver
     public class ModelSaveToWeb : IModelSaver
     {
         private ModelOperateState m_SaveState;
+        private Action<bool> onSaveCompleteCallback;
+        private string lastError = "";
+
         public string ErrorMsg()
         {
-            throw new NotImplementedException();
+            return lastError;
         }
 
         public float GetPercentage()
@@ -32,18 +35,30 @@ namespace Mig.Model.ModelSaver
 
         public async void Save(string pathORAddress, GameObject modelParent, Action<bool> onSaveComplete)
         {
+            onSaveCompleteCallback = onSaveComplete;
+            lastError = "";
+            m_SaveState = ModelOperateState.LOADING;
+
+            if (modelParent == null)
+            {
+                lastError = "Model parent is null";
+                m_SaveState = ModelOperateState.ERROR;
+                onSaveCompleteCallback?.Invoke(false);
+                return;
+            }
+
             var settings = GLTFSettings.GetOrCreateSettings();
             var exportOptions = new ExportContext(settings);
             var exporter = new GLTFSceneExporter(modelParent.transform, exportOptions);
 
-            var invokedByShortcut = Event.current?.type == EventType.KeyDown;
-
             using (Stream ftpStream = new MemoryStream())
             {
-                // Async glTF export
                 exporter.SaveGLBToStream(ftpStream, "My new glTF scene");
+                ftpStream.Position = 0;
 
-                var getUploadPath = Path.Combine(FTPClient.GetCurrentFTPDirRoot(), modelParent.name + ".glb");
+                var getUploadPath = FTPClient.CombineUrl(
+                    string.IsNullOrEmpty(pathORAddress) ? FTPClient.GetCurrentFTPDirRoot() : pathORAddress,
+                    modelParent.name + ".glb");
 
                 await FTPClient.UploadStream(getUploadPath, ftpStream, OnUploadCallback);
             }
@@ -51,12 +66,19 @@ namespace Mig.Model.ModelSaver
 
         public void Save(string pathORAddress, ISerializer serializer, Action<bool> onSaveComplete)
         {
-            throw new NotImplementedException();
+            lastError = "Serializer save is not implemented for ModelSaveToWeb";
+            onSaveComplete?.Invoke(false);
         }
 
         private void OnUploadCallback(bool result)
         {
-            Debug.Log("Save Sucsess");
+            m_SaveState = result ? ModelOperateState.LOAD_COMPLETE : ModelOperateState.ERROR;
+            if (!result)
+            {
+                lastError = "FTP upload failed";
+            }
+            Debug.Log(result ? "[Mig] Model uploaded" : "[Mig] Model upload failed");
+            onSaveCompleteCallback?.Invoke(result);
         }
     }
 }

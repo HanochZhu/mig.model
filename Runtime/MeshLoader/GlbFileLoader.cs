@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Runtime.ExceptionServices;
 using UnityEngine;
 using UnityGLTF;
 
@@ -9,6 +8,8 @@ namespace Mig.Model.ModelLoader
     public class GlbFileLoader : IModelLoader
     {
         private ModelOperateState operateState = ModelOperateState.LOADING;
+        private string lastError = "";
+        private string lastPath = "";
 
         private Transform parent;
         public void SetParent(Transform root)
@@ -17,17 +18,17 @@ namespace Mig.Model.ModelLoader
         }
         public string ErrorMsg()
         {
-            throw new NotImplementedException();
+            return lastError;
         }
 
         public string GetLoaderName()
         {
-            throw new NotImplementedException();
+            return nameof(GlbFileLoader);
         }
 
         public float GetPercentage()
         {
-            throw new NotImplementedException();
+            return operateState == ModelOperateState.LOAD_COMPLETE ? 1f : 0f;
         }
 
         public ModelOperateState GetState()
@@ -38,29 +39,46 @@ namespace Mig.Model.ModelLoader
         public async void LoadAsync(string path, Action<GameObject> _callback)
         {
             operateState = ModelOperateState.LOADING;
+            lastPath = path;
+            lastError = "";
+
+            if (string.IsNullOrEmpty(path) || !File.Exists(path))
+            {
+                lastError = $"GLB file not found: {path}";
+                operateState = ModelOperateState.ERROR;
+                Debug.LogError($"[Mig] {lastError}");
+                _callback?.Invoke(null);
+                return;
+            }
+
+            if (parent == null)
+            {
+                lastError = "GLB loader parent is not set";
+                operateState = ModelOperateState.ERROR;
+                _callback?.Invoke(null);
+                return;
+            }
 
             ImportOptions glftLoaderOptions = new ImportOptions();
-
-
-            byte[] data = File.ReadAllBytes(path);
             var gltfImporter = new GLTFSceneImporter(path, glftLoaderOptions);
 
             await gltfImporter.LoadSceneAsync(onLoadComplete: (result, info) =>
             {
-                if (info == null)
+                if (info == null && result != null)
                 {
                     foreach (Transform child in result.transform)
                     {
                         child.SetParent(parent);
                     }
+                    operateState = ModelOperateState.LOAD_COMPLETE;
                     _callback?.Invoke(parent.gameObject);
+                    return;
                 }
-                else
-                {
-                    _callback.Invoke(null);
-                }
-                operateState = ModelOperateState.LOAD_COMPLETE;
 
+                lastError = info != null ? info.SourceException?.Message ?? "GLTF import failed" : "GLTF import returned no scene";
+                operateState = ModelOperateState.ERROR;
+                Debug.LogError($"[Mig] Failed to load GLB {lastPath}: {lastError}");
+                _callback?.Invoke(null);
             });
         }
 

@@ -101,7 +101,13 @@ namespace Mig.Model
                 return;
             }
 
-            CurrentMaterial = new MigMaterial(selected.GetComponent<MeshRenderer>().material, selected);
+            var selectedRenderer = selected.GetComponent<Renderer>();
+            if (selectedRenderer == null)
+            {
+                return;
+            }
+
+            CurrentMaterial = new MigMaterial(selectedRenderer.material, selected);
             CurrentSelectGameObject = selected;
             EventManager.TriggerEvent(MigEventCommon.OnSelectedChanged, CurrentSelectGameObject);
         }
@@ -202,7 +208,13 @@ namespace Mig.Model
         private void OnOnDeleteModel(object arg0, object arg1)
         {
             Debug.Log("Destroy Model");
-            Destroy(CurrentGameObjectRoot);
+            if (CurrentGameObjectRoot != null)
+            {
+                Destroy(CurrentGameObjectRoot);
+                CurrentGameObjectRoot = null;
+            }
+            CurrentSelectGameObject = null;
+            CurrentMaterial = null;
         }
         private void OnLoadComplete(GameObject loadedModelRoot)
         {
