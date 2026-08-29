@@ -13,6 +13,7 @@ namespace Mig.Model
     public class ModelManager: JigSingleton<ModelManager>
     {
         public Action OnModelLoadCompleteEvent;
+        public Action OnModelLoadFailedEvent;
         // Todo
         [HideInInspector]
         public GameObject Center;
@@ -117,6 +118,7 @@ namespace Mig.Model
             if (m_currentLoader != null)
             {
                 Debug.LogError("Failed to load model from file. Waiting for last loader complete");
+                OnModelLoadFailedEvent?.Invoke();
                 return;
             }
 
@@ -133,6 +135,7 @@ namespace Mig.Model
             if (m_currentLoader != null)
             {
                 Debug.LogError("[ModelManager] Failed to load model from web. Waiting for last loader complete");
+                OnModelLoadFailedEvent?.Invoke();
                 return;
             }
 
@@ -218,11 +221,26 @@ namespace Mig.Model
             CurrentSelectGameObject = null;
             CurrentMaterial = null;
         }
+        private void NotifyLoadFailed()
+        {
+            if (m_currentLoader != null)
+            {
+                m_currentLoader.OnDispose();
+                m_currentLoader = null;
+            }
+
+            OnModelLoadFailedEvent?.Invoke();
+        }
+
         private void OnLoadComplete(GameObject loadedModelRoot)
         {
-            if (m_currentLoader.GetState() == ModelOperateState.ERROR)
+            if (m_currentLoader == null || m_currentLoader.GetState() == ModelOperateState.ERROR || loadedModelRoot == null)
             {
-                Debug.LogError($"Failed to load module from {m_currentLoader.GetLoaderName()}, Detail {m_currentLoader.ErrorMsg()}");
+                if (m_currentLoader != null)
+                {
+                    Debug.LogError($"Failed to load module from {m_currentLoader.GetLoaderName()}, Detail {m_currentLoader.ErrorMsg()}");
+                }
+                NotifyLoadFailed();
                 return;
             }
             if (loadedModelRoot != CurrentGameObjectRoot)
