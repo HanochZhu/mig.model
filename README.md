@@ -38,7 +38,7 @@ Representative operations include:
 - loading models from a file picker
 - loading `.glb` files directly
 - saving models to local files
-- saving models or project assets to the web through FTP-backed flows
+- saving models or project assets through the HTTP sync service
 
 ### `Runtime/MeshLoader`
 
@@ -121,13 +121,13 @@ using Mig.Model.ModelSaver;
 
 This package is usually used together with other Mig packages:
 
-- `com.mig.core` provides shared abstractions such as materials, FTP helpers, and wrapper infrastructure.
+- `com.mig.core` provides shared abstractions such as materials, remote storage, and wrapper infrastructure.
 - `com.mig.presentation` handles project-level serialization and presentation workflows built on top of loaded model data.
 
 ## Development Notes
 
 - The package is designed as runtime infrastructure, not as a standalone application.
-- Some save workflows depend on FTP and shared services from `com.mig.core`.
+- Some save workflows depend on `RemoteStorage` and shared services from `com.mig.core`.
 - Import and export behaviors may rely on external packages such as UnityGLTF.
 
 ## License
